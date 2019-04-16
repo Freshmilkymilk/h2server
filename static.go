@@ -23,7 +23,6 @@ package main
 import (
 	"crypto/md5"
 	"fmt"
-	"github.com/newrelic/go-agent"
 	"io"
 	"mime"
 	"net/http"
@@ -49,32 +48,22 @@ func init() {
 }
 
 func serveFile(w http.ResponseWriter, r *http.Request, path string) (int64, int) {
-	txn := nrApp.StartTransaction("serve-"+path, w, r)
-	defer txn.End()
 
 	if path == "./client/" {
 		path = "./client/index.html"
 	}
 
-	if path == "stopall/client/" {
-		path = "./stopall/client/index.html"
-	}
-
-	seg := newrelic.StartSegment(txn, "stat-"+path)
 	_, err := os.Stat(path)
 	if os.IsNotExist(err) {
 		log.Error(err)
 		return 0, http.StatusNotFound
 	}
-	seg.End()
 
-	seg = newrelic.StartSegment(txn, "sum-"+path)
 	sum, err := getFileSum(path)
 	if err != nil {
 		log.Error(err)
 		return 0, http.StatusInternalServerError
 	}
-	seg.End()
 
 	w.Header().Set("Content-Type", mime.TypeByExtension(filepath.Ext(path)))
 	if w.Header().Get("Cache-Control") == "" {

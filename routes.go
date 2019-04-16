@@ -21,25 +21,14 @@
 package main
 
 import (
-	nrgorilla "github.com/newrelic/go-agent/_integrations/nrgorilla/v1"
 	"net/http"
 	"os"
 	"strings"
 )
 
 func addRoutesToRouter() {
-	server.r.Host("ifcfg.org").Name("ifcfg.org").PathPrefix("/").HandlerFunc(server.ifcfgRootHandler)
-	server.r.Host("v4.ifcfg.org").Name("ifcfg.org-v4").PathPrefix("/").HandlerFunc(server.ifcfgRootHandler)
-	server.r.Host("v6.ifcfg.org").Name("ifcfg.org-v6").PathPrefix("/").HandlerFunc(server.ifcfgRootHandler)
-
-	server.r.Host("stopallthe.download").Path("/ing/provision").Handler(http.RedirectHandler("https://gist.githubusercontent.com/HenrySlawniak/c31cedaec491c68631a6f62b5d94a740/raw", http.StatusFound))
-	server.r.Host("stopallthe.download").Path("/ing/install-go").Handler(http.RedirectHandler("https://gist.githubusercontent.com/HenrySlawniak/1b17dc248f57016ee820a7502d7285ce/raw", http.StatusFound))
-	server.r.Host("stopallthe.download").Name("stopall").PathPrefix("/ing/").HandlerFunc(server.stopAllIngHandler)
-	server.r.Host("stopallthe.download").Name("stopall").PathPrefix("/").HandlerFunc(server.stopAllRootHandler)
 
 	server.r.PathPrefix("/").HandlerFunc(server.indexHandler).Name("catch-all")
-
-	server.r = nrgorilla.InstrumentRoutes(server.r, nrApp)
 }
 
 // GetIP returns the remote ip of the request, by stripping off the port from the RemoteAddr
@@ -50,26 +39,6 @@ func GetIP(r *http.Request) string {
 	ip = strings.Replace(ip, "[", "", 1)
 	ip = strings.Replace(ip, "]", "", 1)
 	return ip
-}
-
-func (s *Server) ifcfgRootHandler(w http.ResponseWriter, r *http.Request) {
-	ip := GetIP(r)
-	w.Header().Set("Server", "ifcfg.org")
-
-	if strings.Contains(r.Header.Get("User-Agent"), "curl") || r.Header.Get("Accept") == "text/plain" {
-		w.Header().Set("Content-Type", "text/plain")
-		w.Write([]byte(ip + "\n"))
-		return
-	}
-	w.Write([]byte(ip))
-}
-
-func (s *Server) stopAllRootHandler(w http.ResponseWriter, r *http.Request) {
-	http.Redirect(w, r, "/ing"+r.URL.RequestURI(), http.StatusFound)
-}
-
-func (s *Server) stopAllIngHandler(w http.ResponseWriter, r *http.Request) {
-	serveFile(w, r, "stopall/client"+strings.Replace(r.URL.RequestURI(), "/ing", "", -1))
 }
 
 func (s *Server) indexHandler(w http.ResponseWriter, r *http.Request) {

@@ -24,8 +24,6 @@ import (
 	"bufio"
 	"crypto/tls"
 	"flag"
-	"github.com/newrelic/go-agent"
-	"github.com/newrelic/go-agent/_integrations/nrlogrus"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/acme/autocert"
 	"golang.org/x/net/http2"
@@ -48,8 +46,6 @@ var (
 	listen             string
 	dial               string
 	accessLogInConsole bool
-	nrKey              string
-	nrApp              newrelic.Application
 
 	logFile = filepath.Join(".logs", "access.log")
 	f       *os.File
@@ -69,28 +65,13 @@ func init() {
 
 	domain, found = os.LookupEnv("DOMAIN")
 	if !found {
-		domain = "henry.network"
+		domain = "andeeson.com"
 	}
 
 	listen, found = os.LookupEnv("LISTEN")
 	if !found {
 		listen = ":https"
 
-	}
-
-	nrKey, found = os.LookupEnv("NR_KEY")
-	if found {
-		log.Info("Setting up New Relic Go Agent")
-		var err error
-		nrConf := newrelic.NewConfig("h2server", nrKey)
-		nrConf.Logger = nrlogrus.StandardLogger()
-		nrConf.DistributedTracer.Enabled = true
-		nrConf.BrowserMonitoring.Enabled = true
-
-		nrApp, err = newrelic.NewApplication(nrConf)
-		if err != nil {
-			log.Panic(err)
-		}
 	}
 
 	var err error
